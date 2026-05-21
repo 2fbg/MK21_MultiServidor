@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../services/demo_iptv_library_service.dart';
 import '../../services/iptv_library_service.dart';
+import '../live/live_page.dart';
+import '../movies/movies_page.dart';
+import '../series/series_page.dart';
 import 'widgets/home_action_card.dart';
 import 'widgets/home_content_row.dart';
 import 'widgets/home_side_menu.dart';
