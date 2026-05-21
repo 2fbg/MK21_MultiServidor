@@ -5,14 +5,14 @@ import '../../../models/server_profile.dart';
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({
     super.key,
-    required this.selectedServerId,
-    required this.onServerChanged,
+    this.selectedServerId = 'mk21',
+    this.onServerChanged,
     this.onSearch,
     this.onSettings,
   });
 
   final String selectedServerId;
-  final ValueChanged<String> onServerChanged;
+  final ValueChanged<String>? onServerChanged;
   final VoidCallback? onSearch;
   final VoidCallback? onSettings;
 
@@ -47,51 +47,20 @@ class HomeTopBar extends StatelessWidget {
             icon: const Icon(Icons.search),
           ),
           const SizedBox(width: 10),
-          Container(
-            height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.075),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: selected.color.withOpacity(0.55)),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selected.id,
-                dropdownColor: const Color(0xFF101827),
-                borderRadius: BorderRadius.circular(18),
-                iconEnabledColor: Colors.white,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-                items: ServerProfiles.all.map((profile) {
-                  return DropdownMenuItem<String>(
-                    value: profile.id,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: profile.color,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(profile.name),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    onServerChanged(value);
-                  }
-                },
-              ),
-            ),
+          DropdownButton<String>(
+            value: selected.id,
+            dropdownColor: const Color(0xFF101827),
+            items: ServerProfiles.all.map((profile) {
+              return DropdownMenuItem<String>(
+                value: profile.id,
+                child: Text(profile.name),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null && onServerChanged != null) {
+                onServerChanged!(value);
+              }
+            },
           ),
           const SizedBox(width: 10),
           IconButton.filledTonal(
