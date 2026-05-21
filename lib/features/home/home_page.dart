@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../services/demo_iptv_library_service.dart';
+import '../../services/iptv_library_service.dart';
 import 'widgets/home_action_card.dart';
 import 'widgets/home_content_row.dart';
 import 'widgets/home_side_menu.dart';
@@ -8,79 +10,58 @@ import 'widgets/home_top_bar.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  static const featuredItems = [
-    'ESPN Brasil',
-    'Premiere Clubes',
-    'Telecine Premium',
-    'HBO',
-    'Discovery',
-    'Globo HD',
-    'SporTV',
-    'Band News',
-  ];
-
-  static const continueItems = [
-    'Filme interrompido',
-    'Série T01:E03',
-    'Canal visto recentemente',
-    'Documentário',
-    'Novela',
-  ];
-
-  static const movieItems = [
-    'Lançamentos 2026',
-    'Mais assistidos',
-    'Ação',
-    'Comédia',
-    'Drama',
-    'Infantil',
-  ];
-
-  static const seriesItems = [
-    'Séries em alta',
-    'Novas temporadas',
-    'Continuar série',
-    'Drama',
-    'Suspense',
-    'Família',
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final library = DemoIptvLibraryService.build();
+
+    final liveItems = library.liveItems.map((item) => item.name).toList();
+    final movieItems = library.movieItems.map((item) => item.name).toList();
+    final seriesItems = library.seriesItems.map((item) => item.name).toList();
+
+    final currentYear = DateTime.now().year;
+    final yearHighlights = library
+        .currentYearHighlights(items: library.movieItems, year: currentYear)
+        .map((item) => item.name)
+        .toList();
+
+    return Scaffold(
       body: Stack(
         children: [
-          _BackgroundGlow(),
+          const _BackgroundGlow(),
           SafeArea(
             child: Row(
               children: [
-                HomeSideMenu(),
+                const HomeSideMenu(),
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
-                      SliverToBoxAdapter(child: HomeTopBar()),
-                      SliverToBoxAdapter(child: _HeroBanner()),
-                      SliverToBoxAdapter(child: _QuickActions()),
+                      const SliverToBoxAdapter(child: HomeTopBar()),
+                      SliverToBoxAdapter(child: _HeroBanner(library: library)),
+                      SliverToBoxAdapter(
+                        child: _QuickActions(library: library),
+                      ),
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Destaques ao vivo',
-                          subtitle: 'Canais rápidos para TV Box',
-                          items: featuredItems,
+                          subtitle: '${library.liveCount} canais separados',
+                          items: liveItems,
                           icon: Icons.live_tv,
                         ),
                       ),
                       SliverToBoxAdapter(
                         child: HomeContentRow(
-                          title: 'Continuar assistindo',
-                          subtitle: 'Retome de onde parou',
-                          items: continueItems,
-                          icon: Icons.play_circle,
+                          title: 'Lançamentos $currentYear',
+                          subtitle: 'Destaques do ano vigente',
+                          items: yearHighlights.isEmpty
+                              ? movieItems.take(6).toList()
+                              : yearHighlights,
+                          icon: Icons.auto_awesome,
                         ),
                       ),
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Filmes',
-                          subtitle: 'VOD separado dos canais ao vivo',
+                          subtitle: '${library.movieCount} VODs organizados',
                           items: movieItems,
                           icon: Icons.movie,
                         ),
@@ -88,12 +69,13 @@ class HomePage extends StatelessWidget {
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Séries',
-                          subtitle: 'Temporadas e episódios organizados',
+                          subtitle:
+                              '${library.seriesCount} episódios detectados',
                           items: seriesItems,
                           icon: Icons.video_library,
                         ),
                       ),
-                      SliverToBoxAdapter(child: SizedBox(height: 48)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 48)),
                     ],
                   ),
                 ),
@@ -126,7 +108,9 @@ class _BackgroundGlow extends StatelessWidget {
 }
 
 class _HeroBanner extends StatelessWidget {
-  const _HeroBanner();
+  const _HeroBanner({required this.library});
+
+  final IptvLibrary library;
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +131,7 @@ class _HeroBanner extends StatelessWidget {
               left: 34,
               top: 34,
               bottom: 34,
-              width: 560,
+              width: 620,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -176,7 +160,10 @@ class _HeroBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Ao Vivo, Filmes e Séries com separação rígida, favoritos, EPG, PIN parental e player profissional.',
+                    'Biblioteca carregada com ${library.totalCount} itens: '
+                    '${library.liveCount} ao vivo, '
+                    '${library.movieCount} filmes e '
+                    '${library.seriesCount} séries.',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.78),
@@ -219,47 +206,49 @@ class _HeroBanner extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  const _QuickActions();
+  const _QuickActions({required this.library});
+
+  final IptvLibrary library;
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(28, 4, 28, 18),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 4, 28, 18),
       child: Row(
         children: [
           Expanded(
             child: HomeActionCard(
               title: 'Ao Vivo',
-              subtitle: 'Canais e categorias',
+              subtitle: '${library.liveCount} canais',
               icon: Icons.live_tv,
-              color: Color(0xFFE50914),
+              color: const Color(0xFFE50914),
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: HomeActionCard(
               title: 'Filmes',
-              subtitle: 'VOD organizado',
+              subtitle: '${library.movieCount} VODs',
               icon: Icons.movie_creation_outlined,
-              color: Color(0xFF00A3FF),
+              color: const Color(0xFF00A3FF),
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: HomeActionCard(
               title: 'Séries',
-              subtitle: 'Temporadas e episódios',
+              subtitle: '${library.seriesCount} episódios',
               icon: Icons.video_library_outlined,
-              color: Color(0xFF7C3AED),
+              color: const Color(0xFF7C3AED),
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: HomeActionCard(
-              title: 'EPG',
-              subtitle: 'Guia de programação',
-              icon: Icons.calendar_month,
-              color: Color(0xFF10B981),
+              title: 'Categorias',
+              subtitle: '${library.categories.length} grupos',
+              icon: Icons.category,
+              color: const Color(0xFF10B981),
             ),
           ),
         ],
