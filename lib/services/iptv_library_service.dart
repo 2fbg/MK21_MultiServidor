@@ -27,6 +27,21 @@ class IptvLibrary {
   int get movieCount => movieItems.length;
   int get seriesCount => seriesItems.length;
   int get unknownCount => unknownItems.length;
+
+  List<PlaylistItem> currentYearHighlights({int? year, int limit = 20}) {
+    final selectedYear = year ?? DateTime.now().year;
+
+    final highlights = movieItems
+        .where((item) => item.year == selectedYear)
+        .take(limit)
+        .toList();
+
+    if (highlights.isNotEmpty) {
+      return highlights;
+    }
+
+    return movieItems.take(limit).toList();
+  }
 }
 
 class IptvLibraryService {
@@ -138,8 +153,8 @@ class IptvLibraryService {
   List<PlaylistItem> _sortItems(List<PlaylistItem> items) {
     return [...items]..sort((a, b) {
       final groupCompare = (a.groupTitle ?? '').toLowerCase().compareTo(
-        (b.groupTitle ?? '').toLowerCase(),
-      );
+            (b.groupTitle ?? '').toLowerCase(),
+          );
 
       if (groupCompare != 0) {
         return groupCompare;
@@ -165,8 +180,5 @@ class IptvLibraryService {
         .replaceAll('ú', 'u')
         .replaceAll('ç', 'c')
         .trim();
-      List<PlaylistItem> currentYearHighlights() {
-    return const <PlaylistItem>[];
-      } 
   }
 }
