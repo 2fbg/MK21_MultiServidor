@@ -1,50 +1,87 @@
 import 'package:flutter/material.dart';
 
 class HomeSideMenu extends StatelessWidget {
-  const HomeSideMenu({super.key});
+  const HomeSideMenu({
+    super.key,
+    this.onHome,
+    this.onLive,
+    this.onMovies,
+    this.onSeries,
+    this.onCategories,
+    this.onSettings,
+  });
+
+  final VoidCallback? onHome;
+  final VoidCallback? onLive;
+  final VoidCallback? onMovies;
+  final VoidCallback? onSeries;
+  final VoidCallback? onCategories;
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      Icons.home_rounded,
-      Icons.live_tv,
-      Icons.movie,
-      Icons.video_library,
-      Icons.calendar_month,
-      Icons.lock,
-      Icons.settings,
+    final items = [
+      _SideMenuEntry(icon: Icons.home_rounded, onTap: onHome),
+      _SideMenuEntry(icon: Icons.live_tv, onTap: onLive),
+      _SideMenuEntry(icon: Icons.movie, onTap: onMovies),
+      _SideMenuEntry(icon: Icons.video_library, onTap: onSeries),
+      _SideMenuEntry(icon: Icons.category, onTap: onCategories),
+      _SideMenuEntry(icon: Icons.settings, onTap: onSettings),
     ];
 
-    return Container(
-      width: 88,
-      margin: const EdgeInsets.fromLTRB(18, 18, 0, 18),
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.045),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.apps, color: Color(0xFFE50914), size: 30),
-          const SizedBox(height: 24),
-          for (final icon in items)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _SideMenuButton(icon: icon),
+    return SafeArea(
+      child: Container(
+        width: 78,
+        margin: const EdgeInsets.fromLTRB(14, 12, 0, 12),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.045),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.apps, color: Color(0xFFE50914), size: 28),
+            const SizedBox(height: 14),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    for (final item in items)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 9),
+                        child: _SideMenuButton(
+                          icon: item.icon,
+                          onTap: item.onTap,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
-          const Spacer(),
-          Icon(Icons.power_settings_new, color: Colors.white.withOpacity(0.55)),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _SideMenuButton extends StatefulWidget {
-  const _SideMenuButton({required this.icon});
+class _SideMenuEntry {
+  const _SideMenuEntry({required this.icon, this.onTap});
 
   final IconData icon;
+  final VoidCallback? onTap;
+}
+
+class _SideMenuButton extends StatefulWidget {
+  const _SideMenuButton({
+    required this.icon,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   State<_SideMenuButton> createState() => _SideMenuButtonState();
@@ -57,18 +94,23 @@ class _SideMenuButtonState extends State<_SideMenuButton> {
   Widget build(BuildContext context) {
     return FocusableActionDetector(
       onFocusChange: (value) => setState(() => focused = value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        width: 54,
-        height: 54,
-        decoration: BoxDecoration(
-          color: focused
-              ? const Color(0xFFE50914)
-              : Colors.white.withOpacity(0.045),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: focused ? Colors.white70 : Colors.white10),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: focused
+                ? const Color(0xFFE50914)
+                : Colors.white.withOpacity(0.045),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: focused ? Colors.white70 : Colors.white10,
+            ),
+          ),
+          child: Icon(widget.icon, color: Colors.white, size: 25),
         ),
-        child: Icon(widget.icon, color: Colors.white),
       ),
     );
   }
