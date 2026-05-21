@@ -106,9 +106,10 @@ class _HomePageState extends State<HomePage> {
                 final result = snapshot.data!;
                 final library = result.library;
 
-                final live = library.liveItems.map((e) => e.name).take(40).toList();
-                final movies = library.movieItems.map((e) => e.name).take(40).toList();
-                final series = library.seriesItems.map((e) => e.name).take(40).toList();
+                /// ✅ ✅ ✅ CORREÇÃO AQUI
+                final live = library.liveItems.take(40).toList();
+                final movies = library.movieItems.take(40).toList();
+                final series = library.seriesItems.take(40).toList();
 
                 return Row(
                   children: [
@@ -132,7 +133,7 @@ class _HomePageState extends State<HomePage> {
                                 });
 
                                 _msg(
-                                  'Servidor selecionado. Para trocar login/lista, abra Configurar servidor.',
+                                  'Servidor selecionado. (troca automática será ativada no próximo patch)',
                                 );
                               },
                             ),
@@ -196,9 +197,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     _reload();
   }
