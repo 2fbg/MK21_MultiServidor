@@ -6,13 +6,19 @@ import '../categories/categories_page.dart';
 import '../live/live_page.dart';
 import '../movies/movies_page.dart';
 import '../series/series_page.dart';
-import 'widgets/home_action_card.dart';
 import 'widgets/home_content_row.dart';
 import 'widgets/home_side_menu.dart';
 import 'widgets/home_top_bar.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String selectedServerId = 'mk21';
 
   @override
   Widget build(BuildContext context) {
@@ -35,21 +41,56 @@ class HomePage extends StatelessWidget {
           SafeArea(
             child: Row(
               children: [
-                const HomeSideMenu(),
+                HomeSideMenu(
+                  onHome: () => _showMessage(context, 'Home'),
+                  onLive: () => _openPage(context, const LivePage()),
+                  onMovies: () => _openPage(context, const MoviesPage()),
+                  onSeries: () => _openPage(context, const SeriesPage()),
+                  onCategories: () => _openPage(context, const CategoriesPage()),
+                  onSettings: () => _showMessage(
+                    context,
+                    'Configuração de servidor será aberta no próximo bloco',
+                  ),
+                ),
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
-                      const SliverToBoxAdapter(child: HomeTopBar()),
-                      SliverToBoxAdapter(child: _HeroBanner(library: library)),
                       SliverToBoxAdapter(
-                        child: _QuickActions(library: library),
+                        child: HomeTopBar(
+                          selectedServerId: selectedServerId,
+                          onServerChanged: (value) {
+                            setState(() {
+                              selectedServerId = value;
+                            });
+
+                            _showMessage(
+                              context,
+                              'Servidor selecionado no topo. No próximo bloco vamos salvar e recarregar a playlist.',
+                            );
+                          },
+                          onSearch: () => _showMessage(
+                            context,
+                            'Busca será ativada junto com a playlist real.',
+                          ),
+                          onSettings: () => _showMessage(
+                            context,
+                            'Configuração de servidor será aberta no próximo bloco.',
+                          ),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _LibraryStatus(library: library),
                       ),
                       SliverToBoxAdapter(
                         child: HomeContentRow(
-                          title: 'Destaques ao vivo',
-                          subtitle: '${library.liveCount} canais separados',
+                          title: 'Ao vivo',
+                          subtitle: '${library.liveCount} canais',
                           items: liveItems,
                           icon: Icons.live_tv,
+                          onItemTap: (title) => _showPlayerPreview(
+                            context,
+                            title,
+                          ),
                         ),
                       ),
                       SliverToBoxAdapter(
@@ -57,29 +98,40 @@ class HomePage extends StatelessWidget {
                           title: 'Lançamentos $currentYear',
                           subtitle: 'Destaques do ano vigente',
                           items: yearHighlights.isEmpty
-                              ? movieItems.take(6).toList()
+                              ? movieItems.take(8).toList()
                               : yearHighlights,
                           icon: Icons.auto_awesome,
+                          onItemTap: (title) => _showPlayerPreview(
+                            context,
+                            title,
+                          ),
                         ),
                       ),
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Filmes',
-                          subtitle: '${library.movieCount} VODs organizados',
+                          subtitle: '${library.movieCount} VODs',
                           items: movieItems,
                           icon: Icons.movie,
+                          onItemTap: (title) => _showPlayerPreview(
+                            context,
+                            title,
+                          ),
                         ),
                       ),
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Séries',
-                          subtitle:
-                              '${library.seriesCount} episódios detectados',
+                          subtitle: '${library.seriesCount} episódios',
                           items: seriesItems,
                           icon: Icons.video_library,
+                          onItemTap: (title) => _showPlayerPreview(
+                            context,
+                            title,
+                          ),
                         ),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
                     ],
                   ),
                 ),
@@ -87,6 +139,27 @@ class HomePage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openPage(BuildContext context, Widget page) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => page),
+    );
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _showPlayerPreview(BuildContext context, String title) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Abrindo player para: $title'),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -111,158 +184,49 @@ class _BackgroundGlow extends StatelessWidget {
   }
 }
 
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.library});
+class _LibraryStatus extends StatelessWidget {
+  const _LibraryStatus({required this.library});
 
   final IptvLibrary library;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 18, 28, 18),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
       child: Container(
-        height: 310,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF111827), Color(0xFF14213D), Color(0xFF5A0710)],
-          ),
-          border: Border.all(color: Colors.white12),
+          color: Colors.white.withOpacity(0.045),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
         ),
-        child: Stack(
+        child: Row(
           children: [
-            Positioned(
-              left: 34,
-              top: 34,
-              bottom: 34,
-              width: 620,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE50914),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: const Text(
-                      'MK21 MULTISERVIDOR PRO',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Sua central IPTV premium',
-                    style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Biblioteca carregada com ${library.totalCount} itens: '
-                    '${library.liveCount} ao vivo, '
-                    '${library.movieCount} filmes e '
-                    '${library.seriesCount} séries.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.78),
-                      height: 1.4,
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      FilledButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('Entrar agora'),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.settings),
-                        label: const Text('Configurar servidor'),
-                      ),
-                    ],
-                  ),
-                ],
+            const Icon(Icons.storage, color: Color(0xFFE50914), size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Biblioteca demo carregada: ${library.liveCount} ao vivo, '
+                '${library.movieCount} filmes, ${library.seriesCount} séries.',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.78),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            Positioned(
-              right: 34,
-              top: 42,
-              child: Icon(
-                Icons.connected_tv,
-                size: 150,
-                color: Colors.white.withOpacity(0.14),
+            const SizedBox(width: 12),
+            Text(
+              'Próximo: playlist real',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.45),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.library});
-
-  final IptvLibrary library;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 4, 28, 18),
-      child: Row(
-        children: [
-          Expanded(
-            child: HomeActionCard(
-              title: 'Ao Vivo',
-              subtitle: '${library.liveCount} canais',
-              icon: Icons.live_tv,
-              color: const Color(0xFFE50914),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: HomeActionCard(
-              title: 'Filmes',
-              subtitle: '${library.movieCount} VODs',
-              icon: Icons.movie_creation_outlined,
-              color: const Color(0xFF00A3FF),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: HomeActionCard(
-              title: 'Séries',
-              subtitle: '${library.seriesCount} episódios',
-              icon: Icons.video_library_outlined,
-              color: const Color(0xFF7C3AED),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: HomeActionCard(
-              title: 'Categorias',
-              subtitle: '${library.categories.length} grupos',
-              icon: Icons.category,
-              color: const Color(0xFF10B981),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const CategoriesPage(),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
       ),
     );
   }
