@@ -165,5 +165,8 @@ class IptvLibraryService {
         .replaceAll('ú', 'u')
         .replaceAll('ç', 'c')
         .trim();
+      List<PlaylistItem> currentYearHighlights() {
+    return const <PlaylistItem>[];
+      } 
   }
 }
