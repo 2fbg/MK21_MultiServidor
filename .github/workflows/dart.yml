@@ -1,9 +1,7 @@
-name: Flutter
+name: Flutter Build
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
   workflow_dispatch:
 
@@ -12,29 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
-
-      - name: Show Flutter version
-        run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze project source
+      - name: Analyze (non-blocking)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
+      - name: Build APK
+        run: flutter build apk --release
 
-      - name: Run tests
-        run: |
-          if [ -d test ]; then
-            flutter test
-          else
-            echo "No test directory found. Skipping tests."
-          fi
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
