@@ -7,50 +7,66 @@ class HomeContentRow extends StatelessWidget {
     required this.subtitle,
     required this.items,
     required this.icon,
+    this.onItemTap,
   });
 
   final String title;
   final String subtitle;
   final List<String> items;
   final IconData icon;
+  final ValueChanged<String>? onItemTap;
 
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 12, 28, 20),
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFFE50914)),
+              Icon(icon, color: const Color(0xFFE50914), size: 22),
               const SizedBox(width: 10),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 21,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.48),
-                  fontSize: 13,
+              Flexible(
+                child: Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.48),
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           SizedBox(
-            height: 154,
+            height: 148,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
-                return _PosterCard(title: items[index], index: index);
+                final title = items[index];
+
+                return _PosterCard(
+                  title: title,
+                  index: index,
+                  onTap: () => onItemTap?.call(title),
+                );
               },
             ),
           ),
@@ -61,10 +77,15 @@ class HomeContentRow extends StatelessWidget {
 }
 
 class _PosterCard extends StatefulWidget {
-  const _PosterCard({required this.title, required this.index});
+  const _PosterCard({
+    required this.title,
+    required this.index,
+    this.onTap,
+  });
 
   final String title;
   final int index;
+  final VoidCallback? onTap;
 
   @override
   State<_PosterCard> createState() => _PosterCardState();
@@ -88,47 +109,51 @@ class _PosterCardState extends State<_PosterCard> {
 
     return FocusableActionDetector(
       onFocusChange: (value) => setState(() => focused = value),
-      child: AnimatedScale(
-        duration: const Duration(milliseconds: 150),
-        scale: focused ? 1.06 : 1,
-        child: Container(
-          width: 220,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            gradient: LinearGradient(colors: colors),
-            border: Border.all(
-              color: focused ? Colors.white : Colors.white12,
-              width: focused ? 2 : 1,
-            ),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -8,
-                top: -6,
-                child: Icon(
-                  Icons.play_circle_fill,
-                  size: 72,
-                  color: Colors.white.withOpacity(0.12),
-                ),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 150),
+          scale: focused ? 1.045 : 1,
+          child: Container(
+            width: 214,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(colors: colors),
+              border: Border.all(
+                color: focused ? Colors.white : Colors.white12,
+                width: focused ? 2 : 1,
               ),
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: Text(
-                  widget.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 17,
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -8,
+                  top: -6,
+                  child: Icon(
+                    Icons.play_circle_fill,
+                    size: 68,
+                    color: Colors.white.withOpacity(0.12),
                   ),
                 ),
-              ),
-            ],
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Text(
+                    widget.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+``
