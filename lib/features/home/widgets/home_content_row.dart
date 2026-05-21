@@ -72,33 +72,21 @@ class HomeContentRow extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF111827), Color(0xFF1E293B)],
+                        colors: [
+                          Color(0xFF111827),
+                          Color(0xFF1E293B),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (item.logoUrl != null)
-                          Expanded(
-                            child: Center(
-                              child: Image.network(
-                                item.logoUrl!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) =>
-                                    const Icon(Icons.tv, size: 40),
-                              ),
-                            ),
-                          ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: Text(
-                            item.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Text(
+                        item.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 );
@@ -110,4 +98,3 @@ class HomeContentRow extends StatelessWidget {
     );
   }
 }
-``
