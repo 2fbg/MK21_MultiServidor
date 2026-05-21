@@ -24,34 +24,37 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final library = DemoIptvLibraryService.build();
 
-    final liveItems = library.liveItems.map((item) => item.name).toList();
-    final movieItems = library.movieItems.map((item) => item.name).toList();
-    final seriesItems = library.seriesItems.map((item) => item.name).toList();
+    final liveItems = library.liveItems.map((e) => e.name).toList();
+    final movieItems = library.movieItems.map((e) => e.name).toList();
+    final seriesItems = library.seriesItems.map((e) => e.name).toList();
 
     final currentYear = DateTime.now().year;
-    final yearHighlights = library
-        .currentYearHighlights(items: library.movieItems, year: currentYear)
-        .map((item) => item.name)
+    final highlights = library
+        .currentYearHighlights(
+          items: library.movieItems,
+          year: currentYear,
+        )
+        .map((e) => e.name)
         .toList();
 
     return Scaffold(
       body: Stack(
         children: [
-          const _BackgroundGlow(),
+          const _Background(),
           SafeArea(
             child: Row(
               children: [
                 HomeSideMenu(
-                  onHome: () => _showMessage(context, 'Home'),
-                  onLive: () => _openPage(context, const LivePage()),
-                  onMovies: () => _openPage(context, const MoviesPage()),
-                  onSeries: () => _openPage(context, const SeriesPage()),
-                  onCategories: () => _openPage(context, const CategoriesPage()),
-                  onSettings: () => _showMessage(
-                    context,
-                    'Configuração de servidor será aberta no próximo bloco',
-                  ),
+                  onHome: () {},
+                  onLive: () => _open(context, const LivePage()),
+                  onMovies: () => _open(context, const MoviesPage()),
+                  onSeries: () => _open(context, const SeriesPage()),
+                  onCategories: () =>
+                      _open(context, const CategoriesPage()),
+                  onSettings: () => _msg(context, 'Configuração em breve'),
                 ),
+
+                /// ✅ CONTEÚDO PRINCIPAL
                 Expanded(
                   child: CustomScrollView(
                     slivers: [
@@ -59,79 +62,78 @@ class _HomePageState extends State<HomePage> {
                         child: HomeTopBar(
                           selectedServerId: selectedServerId,
                           onServerChanged: (value) {
-                            setState(() {
-                              selectedServerId = value;
-                            });
+                            setState(() => selectedServerId = value);
 
-                            _showMessage(
+                            _msg(
                               context,
-                              'Servidor selecionado no topo. No próximo bloco vamos salvar e recarregar a playlist.',
+                              'Servidor alterado (ainda não recarrega M3U)',
                             );
                           },
-                          onSearch: () => _showMessage(
-                            context,
-                            'Busca será ativada junto com a playlist real.',
-                          ),
-                          onSettings: () => _showMessage(
-                            context,
-                            'Configuração de servidor será aberta no próximo bloco.',
-                          ),
+                          onSearch: () =>
+                              _msg(context, 'Busca em construção'),
+                          onSettings: () =>
+                              _msg(context, 'Abrir config servidor'),
                         ),
                       ),
+
+                      /// ✅ STATUS LIMPO
                       SliverToBoxAdapter(
-                        child: _LibraryStatus(library: library),
+                        child: _StatusBar(library: library),
                       ),
+
+                      /// ✅ AO VIVO
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Ao vivo',
                           subtitle: '${library.liveCount} canais',
                           items: liveItems,
                           icon: Icons.live_tv,
-                          onItemTap: (title) => _showPlayerPreview(
-                            context,
-                            title,
-                          ),
+                          onItemTap: (t) =>
+                              _msg(context, 'Abrir player: $t'),
                         ),
                       ),
+
+                      /// ✅ LANÇAMENTOS
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Lançamentos $currentYear',
-                          subtitle: 'Destaques do ano vigente',
-                          items: yearHighlights.isEmpty
+                          subtitle: 'Filmes recentes',
+                          items: highlights.isEmpty
                               ? movieItems.take(8).toList()
-                              : yearHighlights,
+                              : highlights,
                           icon: Icons.auto_awesome,
-                          onItemTap: (title) => _showPlayerPreview(
-                            context,
-                            title,
-                          ),
+                          onItemTap: (t) =>
+                              _msg(context, 'Abrir player: $t'),
                         ),
                       ),
+
+                      /// ✅ FILMES
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Filmes',
-                          subtitle: '${library.movieCount} VODs',
+                          subtitle: '${library.movieCount}',
                           items: movieItems,
                           icon: Icons.movie,
-                          onItemTap: (title) => _showPlayerPreview(
-                            context,
-                            title,
-                          ),
+                          onItemTap: (t) =>
+                              _msg(context, 'Abrir player: $t'),
                         ),
                       ),
+
+                      /// ✅ SÉRIES
                       SliverToBoxAdapter(
                         child: HomeContentRow(
                           title: 'Séries',
-                          subtitle: '${library.seriesCount} episódios',
+                          subtitle: '${library.seriesCount}',
                           items: seriesItems,
                           icon: Icons.video_library,
-                          onItemTap: (title) => _showPlayerPreview(
-                            context,
-                            title,
-                          ),
+                          onItemTap: (t) =>
+                              _msg(context, 'Abrir player: $t'),
                         ),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 30),
+                      ),
                     ],
                   ),
                 ),
@@ -143,30 +145,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _openPage(BuildContext context, Widget page) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
+  void _open(BuildContext c, Widget page) {
+    Navigator.of(c).push(MaterialPageRoute(builder: (_) => page));
   }
 
-  void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
-  void _showPlayerPreview(BuildContext context, String title) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Abrindo player para: $title'),
-        duration: const Duration(seconds: 2),
-      ),
+  void _msg(BuildContext c, String m) {
+    ScaffoldMessenger.of(c).showSnackBar(
+      SnackBar(content: Text(m)),
     );
   }
 }
 
-class _BackgroundGlow extends StatelessWidget {
-  const _BackgroundGlow();
+/// ✅ FUNDO
+class _Background extends StatelessWidget {
+  const _Background();
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +168,6 @@ class _BackgroundGlow extends StatelessWidget {
           center: Alignment.topRight,
           radius: 1.1,
           colors: [Color(0xFF182B4F), Color(0xFF090D17), Color(0xFF05070D)],
-          stops: [0.0, 0.45, 1.0],
         ),
       ),
       child: SizedBox.expand(),
@@ -184,50 +175,24 @@ class _BackgroundGlow extends StatelessWidget {
   }
 }
 
-class _LibraryStatus extends StatelessWidget {
-  const _LibraryStatus({required this.library});
+/// ✅ STATUS LIMPO
+class _StatusBar extends StatelessWidget {
+  const _StatusBar({required this.library});
 
   final IptvLibrary library;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.045),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.storage, color: Color(0xFFE50914), size: 22),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Biblioteca demo carregada: ${library.liveCount} ao vivo, '
-                '${library.movieCount} filmes, ${library.seriesCount} séries.',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.78),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Próximo: playlist real',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.45),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+      padding: const EdgeInsets.fromLTRB(24, 6, 24, 10),
+      child: Text(
+        '${library.liveCount} canais • ${library.movieCount} filmes • ${library.seriesCount} séries',
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.6),
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 }
+``
