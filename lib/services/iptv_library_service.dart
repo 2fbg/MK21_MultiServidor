@@ -28,6 +28,9 @@ class IptvLibrary {
   int get seriesCount => seriesItems.length;
   int get unknownCount => unknownItems.length;
 
+  /// Compatível com chamadas do tipo:
+  /// library.currentYearHighlights()
+  /// library.currentYearHighlights(items: someList, year: 2026)
   List<PlaylistItem> currentYearHighlights({
     List<PlaylistItem>? items,
     int? year,
@@ -117,6 +120,7 @@ class IptvLibraryService {
     }).toList();
   }
 
+  /// Mantido caso alguma parte do app use o serviço diretamente.
   List<PlaylistItem> currentYearHighlights({
     required List<PlaylistItem> items,
     required int year,
@@ -187,4 +191,3 @@ class IptvLibraryService {
         .trim();
   }
 }
-``
