@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/demo_iptv_library_service.dart';
 import '../../services/iptv_library_service.dart';
+import '../categories/categories_page.dart';
 import '../live/live_page.dart';
 import '../movies/movies_page.dart';
 import '../series/series_page.dart';
@@ -252,6 +253,13 @@ class _QuickActions extends StatelessWidget {
               subtitle: '${library.categories.length} grupos',
               icon: Icons.category,
               color: const Color(0xFF10B981),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const CategoriesPage(),
+                  ),
+                );
+              },
             ),
           ),
         ],
