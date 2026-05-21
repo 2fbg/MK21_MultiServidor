@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../models/server_profile.dart';
 
 class HomeTopBar extends StatelessWidget {
@@ -7,49 +6,44 @@ class HomeTopBar extends StatelessWidget {
     super.key,
     this.selectedServerId = 'mk21',
     this.onServerChanged,
-    this.onSearch,
-    this.onSettings,
   });
 
   final String selectedServerId;
   final ValueChanged<String>? onServerChanged;
-  final VoidCallback? onSearch;
-  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
     final selected = ServerProfiles.firstById(selectedServerId);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: Row(
         children: [
           const Text(
             'MK21',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.w900,
               color: Color(0xFFE50914),
             ),
           ),
           const SizedBox(width: 8),
-          Text(
+          const Text(
             'MultiServidor',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.white.withOpacity(0.86),
-            ),
+            style: TextStyle(fontSize: 16),
           ),
           const Spacer(),
-          IconButton.filledTonal(
-            onPressed: onSearch,
+
+          /// 🔍 BUSCA
+          IconButton(
+            onPressed: () {},
             icon: const Icon(Icons.search),
           ),
-          const SizedBox(width: 10),
+
+          /// ✅ COMBO SERVIDOR
           DropdownButton<String>(
             value: selected.id,
-            dropdownColor: const Color(0xFF101827),
+            dropdownColor: const Color(0xFF121212),
             items: ServerProfiles.all.map((profile) {
               return DropdownMenuItem<String>(
                 value: profile.id,
@@ -62,9 +56,10 @@ class HomeTopBar extends StatelessWidget {
               }
             },
           ),
-          const SizedBox(width: 10),
-          IconButton.filledTonal(
-            onPressed: onSettings,
+
+          /// ⚙️ SETTINGS
+          IconButton(
+            onPressed: () {},
             icon: const Icon(Icons.settings),
           ),
         ],
