@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/playlist_item.dart';
+import '../../player/player_page.dart';
+
 class HomeContentRow extends StatelessWidget {
   const HomeContentRow({
     super.key,
@@ -11,8 +14,17 @@ class HomeContentRow extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final List<String> items;
+  final List<PlaylistItem> items;
   final IconData icon;
+
+  void _openPlayer(BuildContext context, PlaylistItem item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlayerPage(item: item),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,30 +56,49 @@ class HomeContentRow extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 130,
+            height: 150,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: items.length,
               itemBuilder: (context, index) {
-                final title = items[index];
+                final item = items[index];
 
-                return Container(
-                  width: 200,
-                  margin: const EdgeInsets.only(right: 10),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF111827), Color(0xFF1E293B)],
+                return GestureDetector(
+                  onTap: () => _openPlayer(context, item),
+                  child: Container(
+                    width: 200,
+                    margin: const EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF111827), Color(0xFF1E293B)],
+                      ),
                     ),
-                  ),
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (item.logoUrl != null)
+                          Expanded(
+                            child: Center(
+                              child: Image.network(
+                                item.logoUrl!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.tv, size: 40),
+                              ),
+                            ),
+                          ),
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: Text(
+                            item.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -79,3 +110,4 @@ class HomeContentRow extends StatelessWidget {
     );
   }
 }
+``
