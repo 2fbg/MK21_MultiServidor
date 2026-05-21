@@ -34,9 +34,9 @@ class _HomePageState extends State<HomePage> {
             onLive: () => _open(context, const LivePage()),
             onMovies: () => _open(context, const MoviesPage()),
             onSeries: () => _open(context, const SeriesPage()),
-            onCategories: () => _open(context, const CategoriesPage()),
+            onCategories: () =>
+                _open(context, const CategoriesPage()),
           ),
-
           Expanded(
             child: ListView(
               children: [
@@ -45,26 +45,23 @@ class _HomePageState extends State<HomePage> {
                   onServerChanged: (v) =>
                       setState(() => selectedServerId = v),
                 ),
-
                 HomeContentRow(
                   title: 'Ao Vivo',
                   subtitle: '${library.liveCount}',
                   items: live,
                   icon: Icons.live_tv,
                 ),
-
                 HomeContentRow(
                   title: 'Filmes',
                   subtitle: '${library.movieCount}',
                   items: movies,
                   icon: Icons.movie,
                 ),
-
                 HomeContentRow(
                   title: 'Séries',
                   subtitle: '${library.seriesCount}',
                   items: series,
-                  icon: Icons.movie_filter,
+                  icon: Icons.video_library,
                 ),
               ],
             ),
@@ -75,7 +72,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _open(BuildContext c, Widget page) {
-    Navigator.of(c).push(MaterialPageRoute(builder: (_) => page));
+    Navigator.of(c).push(
+      MaterialPageRoute(builder: (_) => page),
+    );
   }
 }
-``
