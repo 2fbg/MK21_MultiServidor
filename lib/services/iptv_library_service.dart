@@ -28,10 +28,15 @@ class IptvLibrary {
   int get seriesCount => seriesItems.length;
   int get unknownCount => unknownItems.length;
 
-  List<PlaylistItem> currentYearHighlights({int? year, int limit = 20}) {
+  List<PlaylistItem> currentYearHighlights({
+    List<PlaylistItem>? items,
+    int? year,
+    int limit = 20,
+  }) {
     final selectedYear = year ?? DateTime.now().year;
+    final sourceItems = items ?? movieItems;
 
-    final highlights = movieItems
+    final highlights = sourceItems
         .where((item) => item.year == selectedYear)
         .take(limit)
         .toList();
@@ -40,7 +45,7 @@ class IptvLibrary {
       return highlights;
     }
 
-    return movieItems.take(limit).toList();
+    return sourceItems.take(limit).toList();
   }
 }
 
@@ -182,3 +187,4 @@ class IptvLibraryService {
         .trim();
   }
 }
+``
