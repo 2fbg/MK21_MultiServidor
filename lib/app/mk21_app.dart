@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/mk21_theme.dart';
-import '../features/home/home_page.dart';
+import 'startup_gate.dart';
 
 class Mk21App extends StatelessWidget {
   const Mk21App({super.key});
@@ -12,7 +12,7 @@ class Mk21App extends StatelessWidget {
       title: 'MK21 MultiServidor',
       debugShowCheckedModeBanner: false,
       theme: Mk21Theme.dark(),
-      home: const HomePage(),
+      home: const StartupGate(),
     );
   }
 }
