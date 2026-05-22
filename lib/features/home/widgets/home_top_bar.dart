@@ -6,14 +6,19 @@ class HomeTopBar extends StatelessWidget {
     super.key,
     this.selectedServerId = 'mk21',
     this.onServerChanged,
+    this.onRefresh,
   });
 
   final String selectedServerId;
   final ValueChanged<String>? onServerChanged;
+  final VoidCallback? onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    final selected = ServerProfiles.firstById(selectedServerId);
+    final profiles = ServerProfiles.all;
+    final selected = profiles.any((p) => p.id == selectedServerId)
+        ? profiles.firstWhere((p) => p.id == selectedServerId)
+        : profiles.first;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
@@ -34,17 +39,11 @@ class HomeTopBar extends StatelessWidget {
           ),
           const Spacer(),
 
-          /// 🔍 BUSCA
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.search),
-          ),
-
-          /// ✅ COMBO SERVIDOR
+          /// COMBO SERVIDOR
           DropdownButton<String>(
             value: selected.id,
             dropdownColor: const Color(0xFF121212),
-            items: ServerProfiles.all.map((profile) {
+            items: profiles.map((profile) {
               return DropdownMenuItem<String>(
                 value: profile.id,
                 child: Text(profile.name),
@@ -57,10 +56,11 @@ class HomeTopBar extends StatelessWidget {
             },
           ),
 
-          /// ⚙️ SETTINGS
+          /// REFRESH LISTA
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.settings),
+            tooltip: 'Atualizar lista',
+            onPressed: onRefresh,
+            icon: const Icon(Icons.refresh),
           ),
         ],
       ),
