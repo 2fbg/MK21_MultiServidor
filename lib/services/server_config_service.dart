@@ -303,7 +303,7 @@ class ServerConfigService {
     }
   }
 
-  Future<void> clear() async {
+    Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     final entries = await loadEntries();
     await prefs.remove(_serverNameKey);
@@ -322,4 +322,7 @@ class ServerConfigService {
 
   String? _normalizeNullable(String? value) {
     if (value == null) return null;
-    final normalized =
+    final normalized = value.trim();
+    return normalized.isEmpty ? null : normalized;
+  }
+}
