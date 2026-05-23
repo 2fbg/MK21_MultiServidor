@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class HomeSideMenu extends StatelessWidget {
   const HomeSideMenu({
     super.key,
-    this.onHome,
     this.onLive,
     this.onMovies,
     this.onSeries,
@@ -11,7 +10,6 @@ class HomeSideMenu extends StatelessWidget {
     this.onSettings,
   });
 
-  final VoidCallback? onHome;
   final VoidCallback? onLive;
   final VoidCallback? onMovies;
   final VoidCallback? onSeries;
@@ -21,7 +19,6 @@ class HomeSideMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _SideMenuEntry(icon: Icons.home_rounded, onTap: onHome),
       _SideMenuEntry(icon: Icons.live_tv, onTap: onLive),
       _SideMenuEntry(icon: Icons.movie, onTap: onMovies),
       _SideMenuEntry(icon: Icons.video_library, onTap: onSeries),
@@ -41,7 +38,7 @@ class HomeSideMenu extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const Icon(Icons.apps, color: Color(0xFFE50914), size: 28),
+            const Icon(Icons.play_circle_fill_rounded, color: Color(0xFFE50914), size: 28),
             const SizedBox(height: 14),
             Expanded(
               child: SingleChildScrollView(
@@ -51,10 +48,7 @@ class HomeSideMenu extends StatelessWidget {
                     for (final item in items)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 9),
-                        child: _SideMenuButton(
-                          icon: item.icon,
-                          onTap: item.onTap,
-                        ),
+                        child: _SideMenuButton(icon: item.icon, onTap: item.onTap),
                       ),
                   ],
                 ),
@@ -75,10 +69,7 @@ class _SideMenuEntry {
 }
 
 class _SideMenuButton extends StatefulWidget {
-  const _SideMenuButton({
-    required this.icon,
-    this.onTap,
-  });
+  const _SideMenuButton({required this.icon, this.onTap});
 
   final IconData icon;
   final VoidCallback? onTap;
@@ -101,13 +92,9 @@ class _SideMenuButtonState extends State<_SideMenuButton> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: focused
-                ? const Color(0xFFE50914)
-                : Colors.white.withOpacity(0.045),
+            color: focused ? const Color(0xFFE50914) : Colors.white.withOpacity(0.045),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: focused ? Colors.white70 : Colors.white10,
-            ),
+            border: Border.all(color: focused ? Colors.white70 : Colors.white10),
           ),
           child: Icon(widget.icon, color: Colors.white, size: 25),
         ),
