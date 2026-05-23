@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../../models/server_config.dart';
+import '../../models/playlist_item.dart';
 import '../../services/iptv_library_service.dart';
 import '../../services/server_config_service.dart';
 import '../categories/categories_page.dart';
@@ -21,64 +21,118 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final _configService = const ServerConfigService();
   late Future<_HomeLoadResult> _future;
-  String selectedServerId = 'mk21';
 
   @override
   void initState() {
     super.initState();
-    _future = _loadLibrary();
+    _future = _loadLibrary(forceRefresh: false);
   }
 
-  Future<_HomeLoadResult> _loadLibrary() async {
-    final config = await const ServerConfigService().load();
-
-    if (config == null || config.playlistUrl.trim().isEmpty) {
-      throw Exception('Nenhuma playlist salva. Configure um servidor primeiro.');
+  Future<_HomeLoadResult> _loadLibrary({required bool forceRefresh}) async {
+    final entry = await _configService.loadSelectedEntry();
+    if (entry == null || entry.playlistUrl.trim().isEmpty) {
+      throw Exception('Nenhuma lista salva. Configure um servidor primeiro.');
     }
 
-    final profileId = config.profileId?.trim();
-    if (profileId != null && profileId.isNotEmpty) {
-      selectedServerId = profileId;
+    final cache = await _configService.loadPlaylistCache(entry.id);
+    final shouldUseCacheFirst = !forceRefresh && cache != null && cache.content.trim().startsWith('#EXTM3U');
+
+    if (shouldUseCacheFirst) {
+      return _buildResult(
+        entry: entry,
+        content: cache.content,
+        fromCache: true,
+        cacheSavedAt: cache.savedAt,
+      );
     }
 
-    final uri = Uri.tryParse(config.playlistUrl.trim());
-
+    final uri = Uri.tryParse(entry.playlistUrl.trim());
     if (uri == null) {
       throw Exception('URL da playlist inválida.');
     }
 
-    final response = await http
-        .get(
-          uri,
-          headers: {
-            'User-Agent': config.userAgent,
-            'Accept': '*/*',
-            'Connection': 'keep-alive',
-          },
-        )
-        .timeout(const Duration(seconds: 35));
+    final response = await http.get(
+      uri,
+      headers: {
+        'User-Agent': entry.userAgent,
+        'Accept': '*/*',
+        'Connection': 'keep-alive',
+      },
+    ).timeout(const Duration(seconds: 35));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Falha ao baixar playlist. HTTP ${response.statusCode}.',
-      );
+      if (cache != null && cache.content.trim().startsWith('#EXTM3U')) {
+        return _buildResult(
+          entry: entry,
+          content: cache.content,
+          fromCache: true,
+          cacheSavedAt: cache.savedAt,
+        );
+      }
+      throw Exception('Falha ao baixar playlist. HTTP ${response.statusCode}.');
     }
 
     final content = response.body;
-
     if (!content.trimLeft().startsWith('#EXTM3U')) {
-      throw Exception(
-        'O servidor respondeu, mas o conteúdo não parece ser uma lista M3U.',
-      );
+      throw Exception('O servidor respondeu, mas o conteúdo não parece ser uma lista M3U.');
     }
 
-    final library = const IptvLibraryService().buildFromM3u(content);
-
-    return _HomeLoadResult(
-      config: config,
-      library: library,
+    final now = DateTime.now();
+    await _configService.savePlaylistCache(
+      PlaylistCacheData(
+        content: content,
+        savedAt: now,
+        serverId: entry.id,
+        serverName: entry.name,
+      ),
     );
+
+    return _buildResult(
+      entry: entry,
+      content: content,
+      fromCache: false,
+      cacheSavedAt: now,
+    );
+  }
+
+  _HomeLoadResult _buildResult({
+    required ServerEntry entry,
+    required String content,
+    required bool fromCache,
+    required DateTime cacheSavedAt,
+  }) {
+    final library = const IptvLibraryService().buildFromM3u(content);
+    return _HomeLoadResult(
+      entry: entry,
+      library: library,
+      rawContent: content,
+      fromCache: fromCache,
+      cacheSavedAt: cacheSavedAt,
+    );
+  }
+
+  void _reload({bool forceRefresh = true}) {
+    setState(() {
+      _future = _loadLibrary(forceRefresh: forceRefresh);
+    });
+  }
+
+  Future<void> _openServerConfig() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ServerConfigPage()));
+    if (!mounted) return;
+    _reload(forceRefresh: false);
+  }
+
+  Future<void> _changeServer(String id) async {
+    await _configService.setSelectedServerId(id);
+    if (!mounted) return;
+    _reload(forceRefresh: false);
+  }
+
+  void _open(BuildContext context, Widget page) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }
 
   @override
@@ -98,27 +152,24 @@ class _HomePageState extends State<HomePage> {
                 if (snapshot.hasError) {
                   return _ErrorView(
                     message: snapshot.error.toString(),
-                    onRetry: _reload,
+                    onRetry: () => _reload(forceRefresh: true),
                     onConfigure: _openServerConfig,
                   );
                 }
 
                 final result = snapshot.data!;
                 final library = result.library;
-
-                /// ✅ ✅ ✅ CORREÇÃO AQUI
-                final live = library.liveItems.take(40).toList();
-                final movies = library.movieItems.take(40).toList();
-                final series = library.seriesItems.take(40).toList();
+                final live = _slice(library.liveItems);
+                final movies = _slice(library.currentYearHighlights(items: library.movieItems, limit: 40));
+                final series = _slice(library.seriesItems.reversed.toList(), limit: 40);
 
                 return Row(
                   children: [
                     HomeSideMenu(
-                      onHome: _reload,
-                      onLive: () => _open(context, const LivePage()),
-                      onMovies: () => _open(context, const MoviesPage()),
-                      onSeries: () => _open(context, const SeriesPage()),
-                      onCategories: () => _open(context, const CategoriesPage()),
+                      onLive: () => _open(context, LivePage(result: result)),
+                      onMovies: () => _open(context, MoviesPage(result: result)),
+                      onSeries: () => _open(context, SeriesPage(result: result)),
+                      onCategories: () => _open(context, CategoriesPage(result: result)),
                       onSettings: _openServerConfig,
                     ),
                     Expanded(
@@ -126,23 +177,13 @@ class _HomePageState extends State<HomePage> {
                         slivers: [
                           SliverToBoxAdapter(
                             child: HomeTopBar(
-                              selectedServerId: selectedServerId,
-                              onServerChanged: (value) {
-                                setState(() {
-                                  selectedServerId = value;
-                                });
-
-                                _msg(
-                                  'Servidor selecionado. (troca automática será ativada no próximo patch)',
-                                );
-                              },
+                              selectedServerId: result.entry.id,
+                              onServerChanged: _changeServer,
+                              onRefresh: () => _reload(forceRefresh: true),
                             ),
                           ),
                           SliverToBoxAdapter(
-                            child: _StatusBar(
-                              serverName: result.config.serverName,
-                              library: library,
-                            ),
+                            child: _StatusBar(result: result),
                           ),
                           SliverToBoxAdapter(
                             child: HomeContentRow(
@@ -168,9 +209,7 @@ class _HomePageState extends State<HomePage> {
                               icon: Icons.video_library,
                             ),
                           ),
-                          const SliverToBoxAdapter(
-                            child: SizedBox(height: 32),
-                          ),
+                          const SliverToBoxAdapter(child: SizedBox(height: 32)),
                         ],
                       ),
                     ),
@@ -184,45 +223,46 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _reload() {
-    setState(() {
-      _future = _loadLibrary();
-    });
+  List<PlaylistItem> _slice(List<PlaylistItem> items, {int limit = 40}) {
+    return items.take(limit).toList();
+  }
+}
+
+class HomePageResultScope extends InheritedWidget {
+  const HomePageResultScope({
+    super.key,
+    required this.result,
+    required super.child,
+  });
+
+  final _HomeLoadResult result;
+
+  static _HomeLoadResult of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<HomePageResultScope>();
+    if (scope == null) {
+      throw FlutterError('HomePageResultScope não encontrado no contexto.');
+    }
+    return scope.result;
   }
 
-  Future<void> _openServerConfig() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const ServerConfigPage(),
-      ),
-    );
-
-    if (!mounted) return;
-
-    _reload();
-  }
-
-  void _open(BuildContext context, Widget page) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
-  }
-
-  void _msg(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
+  @override
+  bool updateShouldNotify(HomePageResultScope oldWidget) => oldWidget.result != result;
 }
 
 class _HomeLoadResult {
   const _HomeLoadResult({
-    required this.config,
+    required this.entry,
     required this.library,
+    required this.rawContent,
+    required this.fromCache,
+    required this.cacheSavedAt,
   });
 
-  final ServerConfig config;
+  final ServerEntry entry;
   final IptvLibrary library;
+  final String rawContent;
+  final bool fromCache;
+  final DateTime cacheSavedAt;
 }
 
 class _Background extends StatelessWidget {
@@ -235,11 +275,7 @@ class _Background extends StatelessWidget {
         gradient: RadialGradient(
           center: Alignment.topRight,
           radius: 1.1,
-          colors: [
-            Color(0xFF182B4F),
-            Color(0xFF090D17),
-            Color(0xFF05070D),
-          ],
+          colors: [Color(0xFF182B4F), Color(0xFF090D17), Color(0xFF05070D)],
         ),
       ),
       child: SizedBox.expand(),
@@ -253,11 +289,7 @@ class _LoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: SizedBox(
-        width: 44,
-        height: 44,
-        child: CircularProgressIndicator(),
-      ),
+      child: SizedBox(width: 44, height: 44, child: CircularProgressIndicator()),
     );
   }
 }
@@ -277,10 +309,7 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        HomeSideMenu(
-          onHome: onRetry,
-          onSettings: onConfigure,
-        ),
+        HomeSideMenu(onSettings: onConfigure),
         Expanded(
           child: Center(
             child: Container(
@@ -295,26 +324,16 @@ class _ErrorView extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    color: Color(0xFFE50914),
-                    size: 44,
-                  ),
+                  const Icon(Icons.warning_amber_rounded, color: Color(0xFFE50914), size: 44),
                   const SizedBox(height: 16),
                   const Text(
                     'Não foi possível carregar a playlist',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     message,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.72),
-                      height: 1.35,
-                    ),
+                    style: TextStyle(color: Colors.white.withOpacity(0.72), height: 1.35),
                   ),
                   const SizedBox(height: 22),
                   Row(
@@ -343,27 +362,20 @@ class _ErrorView extends StatelessWidget {
 }
 
 class _StatusBar extends StatelessWidget {
-  const _StatusBar({
-    required this.serverName,
-    required this.library,
-  });
+  const _StatusBar({required this.result});
 
-  final String serverName;
-  final IptvLibrary library;
+  final _HomeLoadResult result;
 
   @override
   Widget build(BuildContext context) {
+    final library = result.library;
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 4, 28, 14),
       child: Text(
-        '$serverName • ${library.liveCount} canais • '
-        '${library.movieCount} filmes • ${library.seriesCount} séries',
+        '${result.entry.name} • ${library.liveCount} canais • ${library.movieCount} filmes • ${library.seriesCount} séries • ${result.fromCache ? 'cache local' : 'atualizado agora'}',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: Colors.white.withOpacity(0.62),
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: Colors.white.withOpacity(0.62), fontWeight: FontWeight.w700),
       ),
     );
   }
