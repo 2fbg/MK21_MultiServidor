@@ -2,26 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../models/content_type.dart';
 import '../../models/playlist_category.dart';
-import '../../services/demo_iptv_library_service.dart';
 
 class CategoriesPage extends StatelessWidget {
-  const CategoriesPage({super.key});
+  const CategoriesPage({super.key, required this.result});
+
+  final dynamic result;
 
   @override
   Widget build(BuildContext context) {
-    final library = DemoIptvLibraryService.build();
-
-    final liveCategories = library.categories
-        .where((category) => category.type == ContentType.live)
-        .toList();
-
-    final movieCategories = library.categories
-        .where((category) => category.type == ContentType.movie)
-        .toList();
-
-    final seriesCategories = library.categories
-        .where((category) => category.type == ContentType.series)
-        .toList();
+    final library = result.library;
+    final liveCategories = library.categories.where((category) => category.type == ContentType.live).toList();
+    final movieCategories = library.categories.where((category) => category.type == ContentType.movie).toList();
+    final seriesCategories = library.categories.where((category) => category.type == ContentType.series).toList();
 
     return Scaffold(
       body: DecoratedBox(
@@ -42,7 +34,7 @@ class CategoriesPage extends StatelessWidget {
                   title: 'Ao Vivo',
                   subtitle: '${liveCategories.length} grupos de canais',
                   icon: Icons.live_tv,
-                  color: Color(0xFFE50914),
+                  color: const Color(0xFFE50914),
                   categories: liveCategories,
                 ),
               ),
@@ -51,7 +43,7 @@ class CategoriesPage extends StatelessWidget {
                   title: 'Filmes',
                   subtitle: '${movieCategories.length} grupos de VOD',
                   icon: Icons.movie_creation_outlined,
-                  color: Color(0xFF00A3FF),
+                  color: const Color(0xFF00A3FF),
                   categories: movieCategories,
                 ),
               ),
@@ -60,7 +52,7 @@ class CategoriesPage extends StatelessWidget {
                   title: 'Séries',
                   subtitle: '${seriesCategories.length} grupos de episódios',
                   icon: Icons.video_library_outlined,
-                  color: Color(0xFF7C3AED),
+                  color: const Color(0xFF7C3AED),
                   categories: seriesCategories,
                 ),
               ),
@@ -93,34 +85,18 @@ class _Header extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF10B981).withOpacity(0.22),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: const Color(0xFF10B981).withOpacity(0.65),
-              ),
+              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.65)),
             ),
-            child: const Icon(
-              Icons.category,
-              color: Color(0xFF10B981),
-              size: 30,
-            ),
+            child: const Icon(Icons.category, color: Color(0xFF10B981), size: 30),
           ),
           const SizedBox(width: 16),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Categorias',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.7,
-                  ),
-                ),
+                Text('Categorias', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -0.7)),
                 SizedBox(height: 4),
-                Text(
-                  'Grupos separados por Ao Vivo, Filmes e Séries',
-                  style: TextStyle(fontSize: 14, color: Colors.white60),
-                ),
+                Text('Grupos separados por Ao Vivo, Filmes e Séries', style: TextStyle(fontSize: 14, color: Colors.white60)),
               ],
             ),
           ),
@@ -160,21 +136,9 @@ class _CategorySection extends StatelessWidget {
             children: [
               Icon(icon, color: color),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+              Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
               const SizedBox(width: 10),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.52),
-                  fontSize: 13,
-                ),
-              ),
+              Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.52), fontSize: 13)),
             ],
           ),
           const SizedBox(height: 14),
@@ -228,28 +192,18 @@ class _CategoryCardState extends State<_CategoryCard> {
               end: Alignment.bottomRight,
               colors: [widget.color.withOpacity(0.72), const Color(0xFF101522)],
             ),
-            border: Border.all(
-              color: focused ? Colors.white : Colors.white.withOpacity(0.10),
-              width: focused ? 2 : 1,
-            ),
+            border: Border.all(color: focused ? Colors.white : Colors.white.withOpacity(0.10), width: focused ? 2 : 1),
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.folder_rounded,
-                color: Colors.white.withOpacity(0.9),
-                size: 34,
-              ),
+              Icon(Icons.folder_rounded, color: Colors.white.withOpacity(0.9), size: 34),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   widget.category.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                 ),
               ),
             ],
