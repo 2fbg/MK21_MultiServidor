@@ -21,16 +21,12 @@ class IptvLibrary {
   final List<PlaylistCategory> categories;
 
   bool get isEmpty => allItems.isEmpty;
-
   int get totalCount => allItems.length;
   int get liveCount => liveItems.length;
   int get movieCount => movieItems.length;
   int get seriesCount => seriesItems.length;
   int get unknownCount => unknownItems.length;
 
-  /// Compatível com chamadas do tipo:
-  /// library.currentYearHighlights()
-  /// library.currentYearHighlights(items: someList, year: 2026)
   List<PlaylistItem> currentYearHighlights({
     List<PlaylistItem>? items,
     int? year,
@@ -38,16 +34,10 @@ class IptvLibrary {
   }) {
     final selectedYear = year ?? DateTime.now().year;
     final sourceItems = items ?? movieItems;
-
-    final highlights = sourceItems
-        .where((item) => item.year == selectedYear)
-        .take(limit)
-        .toList();
-
+    final highlights = sourceItems.where((item) => item.year == selectedYear).take(limit).toList();
     if (highlights.isNotEmpty) {
       return highlights;
     }
-
     return sourceItems.take(limit).toList();
   }
 }
@@ -59,23 +49,10 @@ class IptvLibraryService {
 
   IptvLibrary buildFromM3u(String content) {
     final allItems = parser.parse(content);
-
-    final liveItems = _sortItems(
-      allItems.where((item) => item.type == ContentType.live).toList(),
-    );
-
-    final movieItems = _sortItems(
-      allItems.where((item) => item.type == ContentType.movie).toList(),
-    );
-
-    final seriesItems = _sortItems(
-      allItems.where((item) => item.type == ContentType.series).toList(),
-    );
-
-    final unknownItems = _sortItems(
-      allItems.where((item) => item.type == ContentType.unknown).toList(),
-    );
-
+    final liveItems = _sortItems(allItems.where((item) => item.type == ContentType.live).toList());
+    final movieItems = _sortItems(allItems.where((item) => item.type == ContentType.movie).toList());
+    final seriesItems = _sortItems(allItems.where((item) => item.type == ContentType.series).toList());
+    final unknownItems = _sortItems(allItems.where((item) => item.type == ContentType.unknown).toList());
     final categories = _buildCategories(allItems);
 
     return IptvLibrary(
@@ -93,10 +70,7 @@ class IptvLibraryService {
     required String categoryName,
   }) {
     final normalizedCategory = _normalize(categoryName);
-
-    return items.where((item) {
-      return _normalize(item.groupTitle ?? '') == normalizedCategory;
-    }).toList();
+    return items.where((item) => _normalize(item.groupTitle ?? '') == normalizedCategory).toList();
   }
 
   List<PlaylistItem> search({
@@ -104,7 +78,6 @@ class IptvLibraryService {
     required String query,
   }) {
     final normalizedQuery = _normalize(query);
-
     if (normalizedQuery.isEmpty) {
       return items;
     }
@@ -113,14 +86,10 @@ class IptvLibraryService {
       final name = _normalize(item.name);
       final group = _normalize(item.groupTitle ?? '');
       final tvgId = _normalize(item.tvgId ?? '');
-
-      return name.contains(normalizedQuery) ||
-          group.contains(normalizedQuery) ||
-          tvgId.contains(normalizedQuery);
+      return name.contains(normalizedQuery) || group.contains(normalizedQuery) || tvgId.contains(normalizedQuery);
     }).toList();
   }
 
-  /// Mantido caso alguma parte do app use o serviço diretamente.
   List<PlaylistItem> currentYearHighlights({
     required List<PlaylistItem> items,
     required int year,
@@ -133,13 +102,11 @@ class IptvLibraryService {
 
     for (final item in items) {
       final groupTitle = item.groupTitle?.trim();
-
       if (groupTitle == null || groupTitle.isEmpty) {
         continue;
       }
 
       final key = '${item.type.name}|${_normalize(groupTitle)}';
-
       byKey.putIfAbsent(
         key,
         () => PlaylistCategory(id: key, name: groupTitle, type: item.type),
@@ -152,7 +119,6 @@ class IptvLibraryService {
         if (typeCompare != 0) {
           return typeCompare;
         }
-
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
 
@@ -161,14 +127,10 @@ class IptvLibraryService {
 
   List<PlaylistItem> _sortItems(List<PlaylistItem> items) {
     return [...items]..sort((a, b) {
-      final groupCompare = (a.groupTitle ?? '').toLowerCase().compareTo(
-            (b.groupTitle ?? '').toLowerCase(),
-          );
-
+      final groupCompare = (a.groupTitle ?? '').toLowerCase().compareTo((b.groupTitle ?? '').toLowerCase());
       if (groupCompare != 0) {
         return groupCompare;
       }
-
       return a.name.toLowerCase().compareTo(b.name.toLowerCase());
     });
   }
