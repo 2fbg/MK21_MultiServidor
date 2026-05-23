@@ -56,8 +56,7 @@ class PlaylistClassifier {
 
   bool _looksLikeSeries(String name, String url, String group) {
     final hasEpisodePattern =
-        RegExp(r's\d{1,2}\s*e\d{1,3}').hasMatch(name) ||
-        RegExp(r'\b\d{1,2}x\d{1,3}\b').hasMatch(name);
+        RegExp(r's\d{1,2}\s*e\d{1,3}').hasMatch(name) || RegExp(r'\b\d{1,2}x\d{1,3}\b').hasMatch(name);
 
     return hasEpisodePattern ||
         group.contains('serie') ||
@@ -70,11 +69,7 @@ class PlaylistClassifier {
   bool _looksLikeMovie(String name, String url, String group) {
     final hasYear = RegExp(r'\b(19|20)\d{2}\b').hasMatch(name);
     final hasMovieExtension =
-        url.endsWith('.mp4') ||
-        url.endsWith('.mkv') ||
-        url.endsWith('.avi') ||
-        url.endsWith('.mov') ||
-        url.endsWith('.m4v');
+        url.endsWith('.mp4') || url.endsWith('.mkv') || url.endsWith('.avi') || url.endsWith('.mov') || url.endsWith('.m4v');
 
     return group.contains('filme') ||
         group.contains('filmes') ||
