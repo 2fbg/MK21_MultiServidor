@@ -36,11 +36,7 @@ class M3uParserService {
 
       final url = line;
       final name = pendingName ?? _fallbackNameFromUrl(url);
-      final type = classifier.classify(
-        name: name,
-        url: url,
-        groupTitle: pendingGroup,
-      );
+      final type = classifier.classify(name: name, url: url, groupTitle: pendingGroup);
 
       items.add(
         PlaylistItem(
@@ -66,23 +62,9 @@ class M3uParserService {
     return items;
   }
 
-  List<PlaylistItem> parseLive(String content) {
-    return parse(
-      content,
-    ).where((item) => item.type == ContentType.live).toList();
-  }
-
-  List<PlaylistItem> parseMovies(String content) {
-    return parse(
-      content,
-    ).where((item) => item.type == ContentType.movie).toList();
-  }
-
-  List<PlaylistItem> parseSeries(String content) {
-    return parse(
-      content,
-    ).where((item) => item.type == ContentType.series).toList();
-  }
+  List<PlaylistItem> parseLive(String content) => parse(content).where((item) => item.type == ContentType.live).toList();
+  List<PlaylistItem> parseMovies(String content) => parse(content).where((item) => item.type == ContentType.movie).toList();
+  List<PlaylistItem> parseSeries(String content) => parse(content).where((item) => item.type == ContentType.series).toList();
 
   String? _extractAttribute(String line, String attribute) {
     final pattern = RegExp('$attribute="([^"]*)"');
@@ -95,17 +77,12 @@ class M3uParserService {
     if (commaIndex == -1 || commaIndex == line.length - 1) {
       return 'Sem nome';
     }
-
     return line.substring(commaIndex + 1).trim();
   }
 
   String _fallbackNameFromUrl(String url) {
     final cleanUrl = url.split('?').first;
-    final segments = cleanUrl
-        .split('/')
-        .where((part) => part.isNotEmpty)
-        .toList();
-
+    final segments = cleanUrl.split('/').where((part) => part.isNotEmpty).toList();
     if (segments.isEmpty) {
       return 'Sem nome';
     }
@@ -123,46 +100,32 @@ class M3uParserService {
 
   int? _extractYear(String name) {
     final match = RegExp(r'\b(19|20)\d{2}\b').firstMatch(name);
-    if (match == null) {
-      return null;
-    }
-
-    return int.tryParse(match.group(0)!);
+    return match == null ? null : int.tryParse(match.group(0)!);
   }
 
   int? _extractSeasonNumber(String name) {
     final normalized = name.toLowerCase();
-
-    final sPattern = RegExp(r's(\d{1,2})\s*e\d{1,3}');
-    final sMatch = sPattern.firstMatch(normalized);
+    final sMatch = RegExp(r's(\d{1,2})\s*e\d{1,3}').firstMatch(normalized);
     if (sMatch != null) {
       return int.tryParse(sMatch.group(1)!);
     }
-
-    final xPattern = RegExp(r'\b(\d{1,2})x\d{1,3}\b');
-    final xMatch = xPattern.firstMatch(normalized);
+    final xMatch = RegExp(r'\b(\d{1,2})x\d{1,3}\b').firstMatch(normalized);
     if (xMatch != null) {
       return int.tryParse(xMatch.group(1)!);
     }
-
     return null;
   }
 
   int? _extractEpisodeNumber(String name) {
     final normalized = name.toLowerCase();
-
-    final sPattern = RegExp(r's\d{1,2}\s*e(\d{1,3})');
-    final sMatch = sPattern.firstMatch(normalized);
+    final sMatch = RegExp(r's\d{1,2}\s*e(\d{1,3})').firstMatch(normalized);
     if (sMatch != null) {
       return int.tryParse(sMatch.group(1)!);
     }
-
-    final xPattern = RegExp(r'\b\d{1,2}x(\d{1,3})\b');
-    final xMatch = xPattern.firstMatch(normalized);
+    final xMatch = RegExp(r'\b\d{1,2}x(\d{1,3})\b').firstMatch(normalized);
     if (xMatch != null) {
       return int.tryParse(xMatch.group(1)!);
     }
-
     return null;
   }
 
