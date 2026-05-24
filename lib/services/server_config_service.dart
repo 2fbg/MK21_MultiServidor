@@ -1,102 +1,68 @@
-import 'dart:convert';
-
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/server_config.dart';
 
-class ServerCredentials {
-  const ServerCredentials({
-    required this.username,
-    required this.password,
-  });
-
-  final String username;
-  final String password;
-
-  bool get isComplete => username.trim().isNotEmpty && password.trim().isNotEmpty;
-}
-
-class ServerEntry {
-  const ServerEntry({
-    required this.id,
-    required this.name,
-    required this.playlistUrl,
-    required this.isManual,
-    this.profileId,
-    this.userAgent = 'MK21-MultiServidor/1.0',
-  });
-
-  final String id;
-  final String name;
-  final String playlistUrl;
-  final bool isManual;
-  final String? profileId;
-  final String userAgent;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'playlistUrl': playlistUrl,
-      'isManual': isManual,
-      'profileId': profileId,
-      'userAgent': userAgent,
-    };
-  }
-
-  factory ServerEntry.fromMap(Map<String, dynamic> map) {
-    return ServerEntry(
-      id: (map['id'] ?? '').toString(),
-      name: (map['name'] ?? 'Servidor').toString(),
-      playlistUrl: (map['playlistUrl'] ?? '').toString(),
-      isManual: map['isManual'] == true,
-      profileId: _nullableString(map['profileId']),
-      userAgent: (map['userAgent'] ?? 'MK21-MultiServidor/1.0').toString(),
-    );
-  }
-
-  static String? _nullableString(Object? value) {
-    if (value == null) return null;
-    final text = value.toString().trim();
-    return text.isEmpty ? null : text;
-  }
-}
-
-class PlaylistCacheData {
-  const PlaylistCacheData({
-    required this.content,
-    required this.savedAt,
-    required this.serverId,
-    required this.serverName,
-  });
-
-  final String content;
-  final DateTime savedAt;
-  final String serverId;
-  final String serverName;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'content': content,
-      'savedAt': savedAt.toIso8601String(),
-      'serverId': serverId,
-      'serverName': serverName,
-    };
-  }
-
-  factory PlaylistCacheData.fromMap(Map<String, dynamic> map) {
-    return PlaylistCacheData(
-      content: (map['content'] ?? '').toString(),
-      savedAt: DateTime.tryParse((map['savedAt'] ?? '').toString()) ??
-          DateTime.fromMillisecondsSinceEpoch(0),
-      serverId: (map['serverId'] ?? '').toString(),
-      serverName: (map['serverName'] ?? 'Servidor').toString(),
-    );
-  }
-}
-
 class ServerConfigService {
+  const ServerConfigService();
+
+  static const String _serverNameKey = 'server_config.serverName';
+  static const String _playlistUrlKey = 'server_config.playlistUrl';
+  static const String _isManualUrlKey = 'server_config.isManualUrl';
+  static const String _profileIdKey = 'server_config.profileId';
+  static const String _usernameKey = 'server_config.username';
+  static const String _passwordKey = 'server_config.password';
+  static const String _userAgentKey = 'server_config.userAgent';
+
+  Future<ServerConfig?> load() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? playlistUrl = prefs.getString(_playlistUrlKey);
+
+    if (playlistUrl == null || playlistUrl.trim().isEmpty) {
+      return null;
+    }
+
+    return ServerConfig(
+      serverName: prefs.getString(_serverNameKey) ?? 'Servidor',
+      playlistUrl: playlistUrl,
+      isManualUrl: prefs.getBool(_isManualUrlKey) ?? false,
+      profileId: _emptyToNull(prefs.getString(_profileIdKey)),
+      username: _emptyToNull(prefs.getString(_usernameKey)),
+      password: _emptyToNull(prefs.getString(_passwordKey)),
+      userAgent: prefs.getString(_userAgentKey) ?? 'MK21-MultiServidor/1.0',
+    );
+  }
+
+  Future<void> save(ServerConfig config) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(_serverNameKey, config.serverName);
+    await prefs.setString(_playlistUrlKey, config.playlistUrl);
+    await prefs.setBool(_isManualUrlKey, config.isManualUrl);
+    await prefs.setString(_profileIdKey, config.profileId ?? '');
+    await prefs.setString(_usernameKey, config.username ?? '');
+    await prefs.setString(_passwordKey, config.password ?? '');
+    await prefs.setString(_userAgentKey, config.userAgent);
+  }
+
+  Future<void> clear() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove(_serverNameKey);
+    await prefs.remove(_playlistUrlKey);
+    await prefs.remove(_isManualUrlKey);
+    await prefs.remove(_profileIdKey);
+    await prefs.remove(_usernameKey);
+    await prefs.remove(_passwordKey);
+    await prefs.remove(_userAgentKey);
+  }
+
+  String? _emptyToNull(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return value;
+  }
+}class ServerConfigService {
   const ServerConfigService();
 
   static const _storage = FlutterSecureStorage();
